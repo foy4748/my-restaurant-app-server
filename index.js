@@ -40,26 +40,22 @@ app.post("/user-uids", (req, res) => {
   res.status(200).send({});
 });
 
-app.get("/schedules/:id", (req, res) => {
-  fs.readFile(schedules_path, "utf8", (error, _readData) => {
-    if (error) {
-      res.status(500).end();
-      console.log(error);
+app.get("/schedules/:id", async (req, res) => {
+  const date_n_time = req.params.id;
+  try {
+    const foundData = await DATE_n_TIME.findOne({ date_n_time })
+      .populate("tables")
+      .exec();
+    if (foundData) {
+      res.send(foundData.tables);
+      return;
+    } else {
+      res.send([]);
       return;
     }
-
-    const readData = JSON.parse(_readData);
-    const bookedTables = readData[req.params.id]?.map(
-      (item) => Object.values(item)[0]
-    );
-    if (bookedTables && bookedTables.length >= 1) {
-      res.setHeader("Content-type", "application/json");
-      res.setHeader("charset", "UTF-8");
-      res.send(bookedTables);
-    } else {
-      res.send({ found: false });
-    }
-  });
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 // Schedule Handler
@@ -77,41 +73,13 @@ app.post("/schedules", async (req, res) => {
         upsert: true,
       }
     );
+    res.status(200).send({ error: false });
   } catch (error) {
     console.error(error);
+    res.status(200).send({ error: true });
   }
-  console.log("HIT");
-  fs.readFile(schedules_path, "utf8", (error, _readData) => {
-    if (error) {
-      res.status(500).end();
-      console.log(error);
-      return;
-    }
-    const readData = JSON.parse(_readData);
-    const found = readData[DATE + TIME];
-    const booking = {};
-    booking[UID] = table;
-    if (found) {
-      readData[DATE + TIME].push(booking);
-    } else {
-      readData[DATE + TIME] = [booking];
-    }
-
-    fs.writeFile(schedules_path, JSON.stringify(readData), "utf8", (error) => {
-      if (error) {
-        res.status(500).end();
-        console.log(error);
-        return;
-      }
-    });
-  });
-  res.status(200).send({ error: false });
 });
 
 app.listen(PORT, () => {
   console.log("RESTAURAN APP SERVER RUNNING AT PORT:", PORT);
 });
-
-/*
-VITE_SERVER_ADDRESS="https://restaurant-app-server-gamma.vercel.app"
-*/

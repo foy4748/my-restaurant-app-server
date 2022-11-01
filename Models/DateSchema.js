@@ -8,7 +8,7 @@ const DATE_n_TIME_SchemaObj = {
     minLength: 10,
     maxLength: 10,
   },
-  tables: [ObjectId],
+  tables: [{ type: ObjectId, ref: "TABLE" }],
 };
 
 const DATE_n_TIME_Schema = Schema(DATE_n_TIME_SchemaObj);
